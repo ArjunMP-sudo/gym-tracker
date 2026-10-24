@@ -1,4 +1,4 @@
-# ASCEND — The Training System
+# Gym Tracker
 
 Next.js 14 (App Router) fitness tracker. Logs are stored as JSON in a **separate private GitHub repo** through a server-side token. Deploys on Vercel.
 

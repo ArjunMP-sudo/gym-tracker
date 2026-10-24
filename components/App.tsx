@@ -114,7 +114,7 @@ export default function App() {
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4 pb-28">
       <header className="flex items-center justify-between">
-        <h1 className="bg-gradient-to-r from-violet-400 to-cyan-300 bg-clip-text text-2xl font-bold text-transparent">ASCEND</h1>
+        <h1 className="bg-gradient-to-r from-violet-400 to-cyan-300 bg-clip-text text-2xl font-bold text-transparent">Gym Tracker</h1>
         <div aria-live="polite" className="text-sm">
           {status.kind === "saving" && <span className="text-cyan-300">Saving…</span>}
           {status.kind === "saved" && <span className="text-emerald-400">Saved to GitHub ✓</span>}
