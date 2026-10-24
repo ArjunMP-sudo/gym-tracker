@@ -1,5 +1,6 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Bg, Hero, LevelUp } from "@/components/Fx";
 import { dayTotals, e1rm, sleepMinutes, waterTotal } from "@/lib/calc";
 import { DEFAULT_PROFILE, emptyDay } from "@/lib/defaults";
 import { Meal as MealSchema, type Day, type Exercise, type Meal, type Profile } from "@/lib/schema";
@@ -55,6 +56,8 @@ export default function App() {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(localDate().slice(0, 7));
+  const [burst, setBurst] = useState<number | null>(null);
+  const prevLevel = useRef<number | null>(null);
 
   const loadAll = useCallback(async () => {
     const r = await api<{ days: Day[]; failed: string[] }>("/api/days");
@@ -104,6 +107,11 @@ export default function App() {
 
   const prog = useMemo(() => computeProgress(all, profile), [all, profile]);
   const today = localDate();
+  useEffect(() => {
+    if (loading) return;
+    if (prevLevel.current !== null && prog.level > prevLevel.current) setBurst(prog.level);
+    prevLevel.current = prog.level;
+  }, [loading, prog.level]);
   const last = all[all.length - 1];
   const totals = dayTotals(day), water = waterTotal(day), sm = sleepMinutes(day.sleep);
   const weights = all.filter((d) => d.weightKg !== undefined).map((d) => ({ date: d.date, w: d.weightKg as number }));
@@ -113,8 +121,10 @@ export default function App() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4 pb-28">
+      <Bg />
+      {burst && <LevelUp level={burst} onClose={() => setBurst(null)} />}
       <header className="flex items-center justify-between">
-        <h1 className="bg-gradient-to-r from-violet-400 to-cyan-300 bg-clip-text text-2xl font-bold text-transparent">Gym Tracker</h1>
+        <h1 className="title-x bg-gradient-to-r from-violet-400 to-cyan-300 bg-clip-text text-2xl text-transparent">Gym Tracker</h1>
         <div aria-live="polite" className="text-sm">
           {status.kind === "saving" && <span className="text-cyan-300">Saving…</span>}
           {status.kind === "saved" && <span className="text-emerald-400">Saved ✓</span>}
@@ -124,8 +134,7 @@ export default function App() {
       </header>
 
       <section className="card space-y-3" aria-label="Character">
-        <div className="flex items-end justify-between"><div className="text-3xl font-bold">Lv {prog.level}</div><div className="text-sm text-slate-400">{prog.xp} / {prog.nextAt} XP · 🔥 {streak(all, today)}-day streak</div></div>
-        <div className="h-3 rounded-full bg-white/10"><div className="fill h-3 rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 shadow-[0_0_12px_rgba(139,92,246,.8)]" style={{ width: prog.pct + "%" }} /></div>
+        <Hero level={prog.level} xp={prog.xp} pct={prog.pct} nextAt={prog.nextAt} streak={streak(all, today)} />
         <div className="grid grid-cols-3 gap-2 text-center text-sm">
           <div><div className="text-lg font-semibold">{weights.length ? weights[weights.length - 1].w : "—"}</div>kg now{profile.targetWeightKg ? ` / ${profile.targetWeightKg} goal` : ""}</div>
           <div><div className="text-lg font-semibold">{weekWorkouts}</div>workouts (7d)</div>
@@ -192,7 +201,7 @@ function Today({ day, edit, totals, water, sm, profile, all, save, saving, dirty
     <div className="space-y-4">
       <div className="card"><label className="lbl" htmlFor="dt">Date</label><input id="dt" type="date" className="inp" value={day.date} max="2100-01-01" onChange={(e) => pickDate(e.target.value)} /></div>
 
-      <section className="card space-y-3"><h2 className="font-semibold">Body</h2>
+      <section className="card space-y-3"><h2 className="h2x">Body</h2>
         <div className="grid grid-cols-2 gap-3">
           <Num label="Morning weight (kg)" value={day.weightKg?.toString() ?? ""} onChange={(v) => edit((d) => ({ ...d, weightKg: v === "" ? undefined : Number(v) }))} />
           <Num label="Waist (cm)" value={day.measurements?.waistCm?.toString() ?? ""} onChange={(v) => edit((d) => ({ ...d, measurements: { ...d.measurements, waistCm: v === "" ? undefined : Number(v) } }))} />
@@ -202,7 +211,7 @@ function Today({ day, edit, totals, water, sm, profile, all, save, saving, dirty
         {day.weightKg ? <p className="text-xs text-slate-400">BMI {(day.weightKg / (profile.heightCm / 100) ** 2).toFixed(1)} is a rough screening number only; it says nothing about muscle or body composition.</p> : null}
       </section>
 
-      <section className="card space-y-3"><h2 className="font-semibold">Food</h2>
+      <section className="card space-y-3"><h2 className="h2x">Food</h2>
         <Bar label="Calories" value={totals.kcal} max={profile.targets.kcal} unit="kcal" />
         <Bar label="Protein" value={totals.protein} max={profile.targets.protein} unit="g" />
         <p className="text-xs text-slate-400">Remaining: {Math.max(0, Math.round(profile.targets.kcal - totals.kcal))} kcal, {Math.max(0, Math.round(profile.targets.protein - totals.protein))} g protein. Unlogged meals are treated as unknown, not zero.</p>
@@ -229,7 +238,7 @@ function Today({ day, edit, totals, water, sm, profile, all, save, saving, dirty
         <button className="btn w-full" onClick={addMeal}>Add food</button>
       </section>
 
-      <section className="card space-y-3"><h2 className="font-semibold">Workout</h2>
+      <section className="card space-y-3"><h2 className="h2x">Workout</h2>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={day.restDay} onChange={(e) => edit((d) => ({ ...d, restDay: e.target.checked }))} /> Rest day (planned recovery counts positively)</label>
         {w ? (<>
           <div><label className="lbl">Session name<input className="inp mt-1" value={w.name} onChange={(e) => setW((x) => { x.name = e.target.value || "Workout"; })} /></label></div>
@@ -257,14 +266,14 @@ function Today({ day, edit, totals, water, sm, profile, all, save, saving, dirty
         </>) : <button className="btn2" onClick={() => setW(() => {})}>+ Add workout</button>}
       </section>
 
-      <section className="card space-y-3"><h2 className="font-semibold">Water</h2>
+      <section className="card space-y-3"><h2 className="h2x">Water</h2>
         <Bar label="Water" value={water} max={profile.targets.water} unit="ml" />
         <div className="flex gap-2">{[250, 500, 750].map((ml) => <button key={ml} className="btn2 flex-1" onClick={() => edit((d) => ({ ...d, water: [...d.water, { id: uid(), ml, time: nowIso() }] }))}>+{ml} ml</button>)}</div>
         <ul className="text-sm text-slate-300">{day.water.map((x) => <li key={x.id} className="flex items-center justify-between py-1">{x.ml} ml · {new Date(x.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           <button className="btn2" aria-label="Delete water entry" onClick={() => edit((d) => ({ ...d, water: d.water.filter((y) => y.id !== x.id) }))}>✕</button></li>)}</ul>
       </section>
 
-      <section className="card space-y-3"><h2 className="font-semibold">Sleep &amp; recovery</h2>
+      <section className="card space-y-3"><h2 className="h2x">Sleep &amp; recovery</h2>
         <div className="grid grid-cols-2 gap-3">
           <div><label className="lbl">Bedtime<input type="time" className="inp mt-1" value={day.sleep?.bedtime ?? ""} onChange={(e) => edit((d) => ({ ...d, sleep: e.target.value ? { bedtime: e.target.value, wake: d.sleep?.wake ?? e.target.value, quality: d.sleep?.quality } : undefined }))} /></label></div>
           <div><label className="lbl">Wake up<input type="time" className="inp mt-1" value={day.sleep?.wake ?? ""} disabled={!day.sleep} onChange={(e) => edit((d) => ({ ...d, sleep: d.sleep ? { ...d.sleep, wake: e.target.value } : undefined }))} /></label></div>
@@ -274,7 +283,7 @@ function Today({ day, edit, totals, water, sm, profile, all, save, saving, dirty
         {day.sleep && <p className="text-sm text-slate-300">{sm === null ? "Bedtime and wake time are identical; enter different times." : `Duration: ${Math.floor(sm / 60)} h ${sm % 60} min (target ${profile.targets.sleepH} h)`}</p>}
       </section>
 
-      <section className="card space-y-3"><h2 className="font-semibold">Notes</h2>
+      <section className="card space-y-3"><h2 className="h2x">Notes</h2>
         <ul className="space-y-2 text-sm">{day.notes.map((n) => <li key={n.id} className="flex justify-between gap-2 rounded-lg bg-white/5 p-2"><span>{n.text}</span><button className="btn2" aria-label="Delete note" onClick={() => { if (confirm("Delete this note?")) edit((d) => ({ ...d, notes: d.notes.filter((x) => x.id !== n.id) })); }}>✕</button></li>)}</ul>
         <textarea className="inp" rows={2} aria-label="New note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Motivation, appetite, energy, anything…" />
         <button className="btn2" onClick={() => { if (!note.trim()) return; edit((d) => ({ ...d, notes: [...d.notes, { id: uid(), time: nowIso(), text: note.trim() }] })); setNote(""); }}>Add note</button>
@@ -290,13 +299,13 @@ function History({ all, month, setMonth, pickDate, date }: { all: Day[]; month: 
   const dl = (q: string) => `/api/export?${q}`;
   return (
     <div className="space-y-4">
-      <section className="card space-y-3"><h2 className="font-semibold">Export</h2>
+      <section className="card space-y-3"><h2 className="h2x">Export</h2>
         <p className="text-xs text-slate-400">Plain-text files generated from your saved GitHub records. Each file ends with a STATUS line stating whether it is complete.</p>
         <a className="btn2 block text-center" href={dl(`scope=day&value=${date}`)} download>Download this day ({date}) (.txt)</a>
         <a className="btn2 block text-center" href={dl(`scope=month&value=${month}`)} download>Download {month} (.txt)</a>
         <a className="btn block text-center" href={dl("scope=all")} download>Download All-Time History (.txt)</a>
       </section>
-      <section className="card space-y-3"><h2 className="font-semibold">Calendar log</h2>
+      <section className="card space-y-3"><h2 className="h2x">Calendar log</h2>
         <label className="lbl">Month<input type="month" className="inp mt-1" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} /></label>
         {days.length === 0 && <p className="text-sm text-slate-400">No saved logs in this month.</p>}
         <ul className="space-y-2">{days.map((d) => { const t = dayTotals(d); return (
@@ -319,7 +328,7 @@ function Settings({ profile, profileSha, setProfile, setProfileSha }: { profile:
   }
   const nv = (v: string) => Number(v);
   return (
-    <section className="card space-y-3"><h2 className="font-semibold">Profile &amp; targets</h2>
+    <section className="card space-y-3"><h2 className="h2x">Profile &amp; targets</h2>
       <div className="grid grid-cols-2 gap-3">
         <Num label="Height (cm)" value={String(p.heightCm)} onChange={(v) => setP({ ...p, heightCm: nv(v) })} />
         <Num label="Target weight (kg)" value={p.targetWeightKg?.toString() ?? ""} onChange={(v) => setP({ ...p, targetWeightKg: v ? nv(v) : undefined })} />
