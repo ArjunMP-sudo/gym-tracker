@@ -5,8 +5,10 @@ import { NextResponse } from "next/server";
 export const COOKIE = "ascend_session";
 const secret = () => {
   const s = process.env.SESSION_SECRET;
-  if (!s || s.length < 32) throw new Error("SESSION_SECRET must be set (32+ chars)");
-  return s;
+  if (s && s.length >= 32) return s;
+  const pw = process.env.APP_PASSWORD;
+  if (!pw) throw new Error("APP_PASSWORD must be set");
+  return crypto.createHash("sha256").update("gym-tracker-session:" + pw).digest("hex"); // changing the password signs everyone out
 };
 const sign = (v: string) => crypto.createHmac("sha256", secret()).update(v).digest("base64url");
 export function makeToken() { const v = String(Date.now() + 7 * 864e5); return `${v}.${sign(v)}`; }

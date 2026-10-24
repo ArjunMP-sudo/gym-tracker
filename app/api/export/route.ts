@@ -1,7 +1,7 @@
 import { guard } from "@/lib/auth";
 import { DEFAULT_PROFILE, dayPath } from "@/lib/defaults";
 import { buildExport } from "@/lib/export";
-import { getFile, loadDays } from "@/lib/github";
+import { getFile, loadDays } from "@/lib/store";
 import { bad, fail } from "@/lib/http";
 import { Day, Profile, dateStr } from "@/lib/schema";
 export const dynamic = "force-dynamic";

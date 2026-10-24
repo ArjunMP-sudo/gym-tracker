@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { StoreError } from "./github";
+import { StoreError } from "./store";
 export const bad = (error: string, status = 400) => NextResponse.json({ error }, { status });
 export function fail(e: unknown) {
   if (e instanceof StoreError) return NextResponse.json({ error: e.message, code: e.code }, { status: e.status });

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { guard } from "@/lib/auth";
-import { getFile, putFile } from "@/lib/github";
+import { getFile, putFile } from "@/lib/store";
 import { fail } from "@/lib/http";
 import { Profile } from "@/lib/schema";
 export const dynamic = "force-dynamic";

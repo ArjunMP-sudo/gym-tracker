@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { guard } from "@/lib/auth";
-import { loadDays } from "@/lib/github";
+import { loadDays } from "@/lib/store";
 import { bad, fail } from "@/lib/http";
 export const dynamic = "force-dynamic";
 export async function GET(req: Request) {

@@ -117,7 +117,7 @@ export default function App() {
         <h1 className="bg-gradient-to-r from-violet-400 to-cyan-300 bg-clip-text text-2xl font-bold text-transparent">Gym Tracker</h1>
         <div aria-live="polite" className="text-sm">
           {status.kind === "saving" && <span className="text-cyan-300">Saving…</span>}
-          {status.kind === "saved" && <span className="text-emerald-400">Saved to GitHub ✓</span>}
+          {status.kind === "saved" && <span className="text-emerald-400">Saved ✓</span>}
           {status.kind === "failed" && <span className="text-red-400">Not saved: {status.msg}</span>}
           {status.kind === "idle" && dirty && <span className="text-amber-300">Unsaved changes</span>}
         </div>
@@ -280,7 +280,7 @@ function Today({ day, edit, totals, water, sm, profile, all, save, saving, dirty
         <button className="btn2" onClick={() => { if (!note.trim()) return; edit((d) => ({ ...d, notes: [...d.notes, { id: uid(), time: nowIso(), text: note.trim() }] })); setNote(""); }}>Add note</button>
       </section>
 
-      <div className="sticky bottom-16"><button className="btn w-full shadow-lg" disabled={saving || !dirty} onClick={save}>{saving ? "Saving…" : dirty ? "Save day to GitHub" : "All changes saved"}</button></div>
+      <div className="sticky bottom-16"><button className="btn w-full shadow-lg" disabled={saving || !dirty} onClick={save}>{saving ? "Saving…" : dirty ? "Save day" : "All changes saved"}</button></div>
     </div>
   );
 }
